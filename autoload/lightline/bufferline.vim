@@ -5,6 +5,7 @@
 scriptencoding utf-8
 
 let s:dirsep              = fnamemodify(getcwd(),':p')[-1:]
+let s:max_width           = get(g:, 'lightline#bufferline#max_width', 0)
 let s:filename_modifier   = get(g:, 'lightline#bufferline#filename_modifier', ':.')
 let s:min_buffer_count    = get(g:, 'lightline#bufferline#min_buffer_count', 0)
 let s:min_tab_count       = get(g:, 'lightline#bufferline#min_tab_count', 0)
@@ -301,12 +302,21 @@ function! s:fit_lengths(list, available)
   return [l:remaining, l:count]
 endfunction
 
+function! s:get_max_width()
+  if type(s:max_width) == v:t_number
+    return s:max_width > 0 ? s:max_width : &columns
+  elseif type(s:max_width) == v:t_string
+    return function(s:max_width)()
+  endif
+  return &columns
+endfunction
+
 function! s:select_buffers(before, current, after)
   let [l:before_names, l:current_names, l:after_names] = [a:before[0], a:current[0], a:after[0]]
   let [l:before_lengths, l:current_lengths, l:after_lengths] = [a:before[1], a:current[1], a:after[1]]
 
   " The current buffer is always displayed
-  let l:width = &columns - l:current_lengths[:0][0]
+  let l:width = s:get_max_width() - l:current_lengths[:0][0]
 
   " Display all buffers if there is enough space to display them
   if s:disable_more_buffers_indicator || s:sum(l:before_lengths) + s:sum(l:after_lengths) <= l:width
